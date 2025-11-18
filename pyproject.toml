@@ -1,19 +1,21 @@
-[build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
-name = "piphelper"
+name = "HL-MakePIP"
 version = "0.1.0"
-description = "Library to scaffold and build pip packages from Codebase-style projects"
-authors = [{ name = "Your Name", email = "you@example.com" }]
+description = "Library to setup and export HL project enviroments to PIP."
+authors = [{ name = "StevenNaliwajka", email = "ConvexBurrito5@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = ["build>=1.2.1"]
 
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project.scripts]
-piphelper = "piphelper.cli:main"
+# ## WRONG. UPDATE
+HL-MakePIP = "Codebase.setup_project_env:main"
 
 [tool.setuptools.packages.find]
+## Wrong. Update
 where = ["."]
 include = ["piphelper*"]
