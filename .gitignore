@@ -8,7 +8,6 @@ __pycache__/
 .idea/
 UserData/
 egg_info
-.github
 # Distribution / packaging
 .Python
 build/
