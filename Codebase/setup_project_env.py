@@ -5,7 +5,6 @@ import sys
 from pathlib import Path
 
 from Codebase.Setup.create_publish_yml import create_publish_yml
-from Codebase.Setup.create_pypirc import create_pypirc
 from Codebase.Setup.create_pyproject_toml import create_pyproject_toml
 
 def setup_project_env(argv: list[str] | None = None) -> int:
@@ -32,14 +31,11 @@ def setup_project_env(argv: list[str] | None = None) -> int:
         """
     project_root = project_root.resolve()
     pyproject_path = project_root / "pyproject.toml"
-    pypirc_path = project_root / "UserData" / ".pypirc"
     publish_path = project_root / ".github" / "workflows" / "publish.yml"
     print(pyproject_path)
-    print(pypirc_path)
     print(publish_path)
 
     create_pyproject_toml(project_root, pyproject_path, force)
-    create_pypirc(project_root, pypirc_path, force)
     create_publish_yml(project_root, publish_path, force)
 
 if __name__ == "__main__":
