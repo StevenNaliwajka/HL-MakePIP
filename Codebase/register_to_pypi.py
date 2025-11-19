@@ -6,32 +6,10 @@ import sys
 import subprocess
 from pathlib import Path
 import getpass
+from typing import Optional
 
 
-def _detect_project_root() -> Path:
-    # Adjust as needed; currently assumes this file lives in <project_root>/Codebase/...
-    return Path(__file__).resolve().parent.parent
-
-
-def _prompt_token(prompt: str) -> str:
-    """
-    Try to read a hidden token with getpass.
-    If that fails (e.g. in some IDE consoles), fall back to visible input().
-    """
-    try:
-        if sys.stdin.isatty():
-            # Standard terminal – use getpass
-            return getpass.getpass(prompt).strip()
-    except Exception:
-        # Any error, fall back to input
-        pass
-
-    # Fallback for environments where getpass doesn't work
-    print("(getpass not available here – your input will be visible)", flush=True)
-    return input(prompt).strip()
-
-
-def register_to_pypi(project_root: str | Path | None = None) -> int:
+def register_to_pypi(project_root: Optional[Path | str] = None) -> int:
     """
     Upload dist/* to the real PyPI using a token provided interactively.
 
@@ -39,8 +17,9 @@ def register_to_pypi(project_root: str | Path | None = None) -> int:
       Windows: py -m twine upload dist/*
       Linux:   python3 -m twine upload dist/*
     """
+    # Detect project root if not given (assumes this file is in <project_root>/Codebase/...)
     if project_root is None:
-        project_root = _detect_project_root()
+        project_root = Path(__file__).resolve().parent.parent
     project_root = Path(project_root).resolve()
 
     dist_dir = project_root / "dist"
@@ -60,20 +39,31 @@ def register_to_pypi(project_root: str | Path | None = None) -> int:
     print("------------------------------------------------------------", flush=True)
     input("Press ENTER once your PyPI API token is ready... ")
 
-    token = _prompt_token(
-        "Paste your PyPI API token here (input may be hidden): "
-    )
+    # Prompt for token (hidden when possible)
+    token: str
+    try:
+        if sys.stdin.isatty():
+            token = getpass.getpass(
+                "Paste your PyPI API token here (input may be hidden): "
+            ).strip()
+        else:
+            raise RuntimeError
+    except Exception:
+        print("(getpass not available here – your input will be visible)", flush=True)
+        token = input("Paste your PyPI API token here: ").strip()
 
     if not token:
         print("[ERROR] No token entered. Aborting.", flush=True)
         return 1
 
+    # Collect files in dist/ instead of relying on shell globbing
     files = sorted(dist_dir.glob("*"))
     if not files:
         print(f"[ERROR] No files found in dist/: {dist_dir}", flush=True)
         print("        Run `python -m build` first to create distributions.", flush=True)
         return 1
 
+    # Choose Python launcher based on OS
     if os.name == "nt":
         python_cmd = ["py", "-m", "twine", "upload"]
     else:

@@ -6,32 +6,10 @@ import sys
 import subprocess
 from pathlib import Path
 import getpass
+from typing import Optional
 
 
-def _detect_project_root() -> Path:
-    # Adjust this if you want a different relation to this file
-    return Path(__file__).resolve().parent.parent
-
-
-def _prompt_token(prompt: str) -> str:
-    """
-    Try to read a hidden token with getpass.
-    If that fails (e.g. in some IDE consoles), fall back to visible input().
-    """
-    try:
-        if sys.stdin.isatty():
-            # Standard terminal – use getpass
-            return getpass.getpass(prompt).strip()
-    except Exception:
-        # Any error, fall back to input
-        pass
-
-    # Fallback for environments where getpass doesn't work
-    print("(getpass not available here – your input will be visible)", flush=True)
-    return input(prompt).strip()
-
-
-def register_to_test_pypi(project_root: str | Path | None = None) -> int:
+def register_to_test_pypi(project_root: Optional[Path | str] = None) -> int:
     """
     Upload dist/* to TestPyPI using a token provided interactively.
 
@@ -39,8 +17,9 @@ def register_to_test_pypi(project_root: str | Path | None = None) -> int:
       Windows: py -m twine upload --repository testpypi dist/*
       Linux:   python3 -m twine upload --repository testpypi dist/*
     """
+    # Detect project root if not given
     if project_root is None:
-        project_root = _detect_project_root()
+        project_root = Path(__file__).resolve().parent.parent
     project_root = Path(project_root).resolve()
 
     dist_dir = project_root / "dist"
@@ -60,9 +39,18 @@ def register_to_test_pypi(project_root: str | Path | None = None) -> int:
     print("------------------------------------------------------------", flush=True)
     input("Press ENTER once your TestPyPI API token is ready... ")
 
-    token = _prompt_token(
-        "Paste your TestPyPI API token here (input may be hidden): "
-    )
+    # Prompt for token (hidden when possible)
+    token: str
+    try:
+        if sys.stdin.isatty():
+            token = getpass.getpass(
+                "Paste your TestPyPI API token here (input may be hidden): "
+            ).strip()
+        else:
+            raise RuntimeError
+    except Exception:
+        print("(getpass not available here – your input will be visible)", flush=True)
+        token = input("Paste your TestPyPI API token here: ").strip()
 
     if not token:
         print("[ERROR] No token entered. Aborting.", flush=True)
@@ -77,10 +65,8 @@ def register_to_test_pypi(project_root: str | Path | None = None) -> int:
 
     # Choose Python launcher based on OS
     if os.name == "nt":
-        # Windows
         python_cmd = ["py", "-m", "twine", "upload", "--repository", "testpypi"]
     else:
-        # Linux / macOS
         python_cmd = ["python3", "-m", "twine", "upload", "--repository", "testpypi"]
 
     cmd = python_cmd + [str(f) for f in files]

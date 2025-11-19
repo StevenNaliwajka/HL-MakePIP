@@ -36,7 +36,8 @@ def setup_project_env(argv: list[str] | None = None) -> int:
     print(publish_path)
 
     create_pyproject_toml(project_root, pyproject_path, force)
-    create_publish_yml(project_root, publish_path, force)
+    ## NOT needed YET: this is for github actions for automatically syncing w/ PIP.
+    #create_publish_yml(project_root, publish_path, force)
 
 if __name__ == "__main__":
     setup_project_env()
