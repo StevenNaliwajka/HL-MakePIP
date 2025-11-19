@@ -2,8 +2,10 @@ name: Publish Python package
 
 on:
   push:
-    tags:
-      - "v*"   # e.g. v0.1.0
+    branches:
+      - main        # run whenever you push to main
+  # (optional, lets you run it manually from the Actions tab)
+  workflow_dispatch:
 
 jobs:
   build-and-publish:
@@ -29,11 +31,12 @@ jobs:
 
       - name: Build package
         run: |
-          python -m build  # <-- this creates dist/*.whl and dist/*.tar.gz
+          python -m build  # creates dist/*.whl and dist/*.tar.gz
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://upload.pypi.org/legacy/
-          # for TestPyPI use:
+          # For TestPyPI instead, use:
           # repository-url: https://test.pypi.org/legacy/
+          # skip-existing: true
