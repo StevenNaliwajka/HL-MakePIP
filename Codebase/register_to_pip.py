@@ -36,34 +36,23 @@ def _run_cmd(cmd: list[str], cwd: Path, verbose: bool = True) -> None:
 def register_to_pip(
     project_root: Path,
     *,
-    upload: bool = False,
-    repository: Optional[str] = None,
     verbose: bool = True,
 ) -> None:
     """
-    Build a Python project (using `python -m build`) and optionally upload it
-    to PyPI/TestPyPI using `python -m twine`.
+    Build a Python project (using `python -m build`).
+
+    This is now designed for a Trusted Publisher setup, where the actual
+    upload to (Test)PyPI is handled by a GitHub Actions workflow
+    (e.g. .github/workflows/publish.yml).
 
     Parameters
     ----------
     project_root:
-        Path to the project you want to build / upload. Must contain pyproject.toml.
-    upload:
-        If True, will attempt to upload the artifacts in `dist/` using twine.
-        If False (default), only builds the project.
-    repository:
-        Optional repository name or URL that will be passed to twine:
-
-          * None (default) -> use twine's default repository (usually PyPI)
-          * "testpypi"     -> use the 'testpypi' repository configured in ~/.pypirc
-          * A full URL     -> passed as --repository-url=<URL>
-
+        Path to the project you want to build. Must contain pyproject.toml.
     verbose:
         If True, prints progress and command output.
     """
     project_root = project_root.resolve()
-    print(f"HERE {project_root}")
-
 
     if verbose:
         print(f"[register_to_pip] Project root: {project_root}")
@@ -77,7 +66,7 @@ def register_to_pip(
 
     # 1) Build the project (wheel + sdist)
     if verbose:
-        print("[register_to_pip] Step 1/2: Building project with `python -m build`")
+        print("[register_to_pip] Step 1/1: Building project with `python -m build`")
 
     _run_cmd(
         [sys.executable, "-m", "build", "--wheel", "--sdist"],
@@ -91,48 +80,27 @@ def register_to_pip(
             f"Build completed but no 'dist' directory was found at {dist_dir}"
         )
 
-    if not upload:
-        if verbose:
-            print("[register_to_pip] Build complete. Skipping upload (no --upload).")
-            print(f"[register_to_pip] Artifacts are in: {dist_dir}")
-        return
-
-    # 2) Upload using twine
     if verbose:
-        print("[register_to_pip] Step 2/2: Uploading with `python -m twine`")
+        print("[register_to_pip] Build complete.")
+        print(f"[register_to_pip] Artifacts are in: {dist_dir}")
 
-    # Check twine is available
-    try:
-        import twine  # noqa: F401  # type: ignore
-    except ImportError as exc:  # pragma: no cover - simple guard
-        raise RuntimeError(
-            "Twine is not installed. Install it with:\n\n"
-            "    python -m pip install twine\n"
-        ) from exc
-
-    dist_glob = str(dist_dir / "*")
-
-    cmd = [sys.executable, "-m", "twine", "upload", dist_glob]
-
-    # If repository is given, interpret it
-    if repository:
-        if repository.startswith("http://") or repository.startswith("https://"):
-            cmd.insert(3, f"--repository-url={repository}")
-        else:
-            # Named repository (pypi/testpypi/etc) configured in ~/.pypirc
-            cmd.insert(3, f"--repository={repository}")
-
-    _run_cmd(cmd, cwd=project_root, verbose=verbose)
-
-    if verbose:
-        print("[register_to_pip] Upload complete.")
+        publish_workflow = project_root / ".github" / "workflows" / "publish.yml"
+        if publish_workflow.is_file():
+            print(
+                "[register_to_pip] Detected GitHub Actions workflow at "
+                f"{publish_workflow}"
+            )
+            print(
+                "[register_to_pip] To publish, push your changes (and any required "
+                "tag/branch) so the workflow can upload to (Test)PyPI."
+            )
 
 
 def _build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Build a Python project (wheel + sdist) and optionally upload it "
-            "to PyPI/TestPyPI using twine."
+            "Build a Python project (wheel + sdist). "
+            "Publishing is handled by your GitHub Actions workflow."
         )
     )
     parser.add_argument(
@@ -140,22 +108,6 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         nargs="?",
         default=".",
         help="Path to the project root (default: current directory).",
-    )
-    parser.add_argument(
-        "--upload",
-        action="store_true",
-        help="After building, upload the artifacts in dist/ using twine.",
-    )
-    parser.add_argument(
-        "--repository",
-        metavar="NAME_OR_URL",
-        default=None,
-        help=(
-            "Optional twine repository name or URL. "
-            "Examples: 'pypi', 'testpypi', or "
-            "'https://test.pypi.org/legacy/'. "
-            "If omitted, twine's default is used."
-        ),
     )
     parser.add_argument(
         "--quiet",
@@ -175,12 +127,9 @@ def main(argv: Optional[list[str]] = None) -> None:
     try:
         register_to_pip(
             project_root=project_root,
-            upload=args.upload,
-            repository=args.repository,
             verbose=verbose,
         )
-    except Exception as exc:  # pragma: no cover
-        # Nice one-line error for CLI usage
+    except Exception as exc:
         print(f"[register_to_pip] ERROR: {exc}", file=sys.stderr)
         sys.exit(1)
 

@@ -7,6 +7,7 @@ __pycache__/
 *.so
 .idea/
 UserData/
+egg_info
 .github
 # Distribution / packaging
 .Python
