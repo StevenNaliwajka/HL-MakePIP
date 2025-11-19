@@ -11,9 +11,6 @@ dependencies = ["build>=1.2.1"]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[project.scripts]
-# Console script entry point: `piphelper` CLI
-
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["Codebase", "Codebase.*"]
