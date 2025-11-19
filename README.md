@@ -26,3 +26,12 @@ register_to_pip - registers the package onto pip.
 Rqs:
 
 pip, twine, build
+
+
+ALSo creates publish.yml
+.github/workflows/publish.yml
+
+
+Should also add those files to .gitignore evneutally 
+
+Consider the "go to github and make pypi enviroment" step

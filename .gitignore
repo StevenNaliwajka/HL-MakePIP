@@ -7,6 +7,7 @@ __pycache__/
 *.so
 .idea/
 UserData/
+.github
 # Distribution / packaging
 .Python
 build/

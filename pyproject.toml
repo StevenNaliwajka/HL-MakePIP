@@ -1,7 +1,7 @@
 [project]
 name = "HL-MakePIP"
 version = "0.1.0"
-description = "Library to setup and export HL project enviroments to PIP."
+description = "Library to setup and export HL project environments to PIP."
 authors = [{ name = "StevenNaliwajka", email = "ConvexBurrito5@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.9"
@@ -12,10 +12,8 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project.scripts]
-# ## WRONG. UPDATE
-HL-MakePIP = "Codebase.setup_project_env:main"
+# Console script entry point: `piphelper` CLI
 
 [tool.setuptools.packages.find]
-## Wrong. Update
 where = ["."]
-include = ["piphelper*"]
+include = ["Codebase", "Codebase.*"]
